@@ -31,13 +31,52 @@ class ZAML
         @indent = old_indent
         end
     def first_time_only(stuff)
+        #
+        # YAML only wants objects in the datastream once; if the same object 
+        #    occurs more than once, we need to emit a label ("&idxxx") on the 
+        #    first occurrence and then emit a back reference (*idxxx") on any
+        #    subsequent occurrence(s). 
+        #
+        # To accomplish this we keeps a hash (by object id) of the labels of
+        #    the things we serialize as we begin to serialize them.  The label 
+        #    is initially an empty string (since most objects are only going to
+        #    be encountered once), but can be changed (Strings are muteable, 
+        #    remember) to a valid label the first time it is subsequently used, 
+        #    if it ever is.  Note that we need to do the label setup BEFORE we 
+        #    start to serialize the object so that circular structures (in 
+        #    which we will encounter a reference to the object as we serialize 
+        #    it can be handled).
+        #
         this_stuff = stuff.object_id
         if @already_done.has_key?(this_stuff)
-            @already_done[this_stuff][0..-1] = '&id%03d ' % (@done_count += 1) if @already_done[this_stuff].empty?
+            #
+            # We have already serialized this object
+            #
+            if @already_done[this_stuff].empty?
+                #
+                # ...but this is the first time we have referred back to it,
+                #     so we need to give it a unique label.  Note that the 
+                #     string we are changing here has already been emitted, so
+                #     this label will pop into existence at the appropriate 
+                #     earlier point in the data stream.
+                @already_done[this_stuff][0..-1] = '&id%03d ' % (@done_count += 1) 
+                end
+            # A back reference is just like the label, but with a '*' instead of a '*'
             emit(@already_done[this_stuff].gsub(/&/,'*'))
           else
-            @already_done[this_stuff] = String.new
-            emit(@already_done[this_stuff])
+            #
+            # We haven't serialized this object yet
+            #
+            # We probably don't need a label on this object but we might, so we 
+            #     emit a new, empty string as a placeholder.  If we don't need 
+            #     a label this empty string has no effect, but if we do need 
+            #     one we can modify the string to make the label show up in the 
+            #     right place.
+            emit(@already_done[this_stuff] = String.new)
+            #
+            # Then we just emit the object itself, prefixed with the (possibly,
+            #     but not for certain permanently) null label string we just 
+            #     made and emitted.
             yield
             end
         end
@@ -117,6 +156,12 @@ class FalseClass
 class Numeric
     def to_zaml(z)
         z.emit(self.to_s)
+        end
+    end
+
+class Regexp
+    def to_zaml(z)
+        z.emit("!ruby/regexp #{self.inspect}")
         end
     end
 
@@ -224,7 +269,10 @@ if $0 == __FILE__
     my_obj = My_class.new
     my_dull_object = Object.new
     my_bob = 'bob'
-    data = {:data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8]}
+    data = {
+      :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
+      :more_data => [:a_regexp =>/a.*(b+)/im]
+      }
 
     puts '*************************** original ***************************'
     pp data
