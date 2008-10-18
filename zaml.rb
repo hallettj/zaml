@@ -1,3 +1,16 @@
+#
+# ZAML -- A partial replacement for YAML, writen with speed and code clarity
+#         in mind.  ZAML fixes one YAML bug (loading Exceptions) and provides 
+#         a replacement for YAML.dump() unimaginatively called ZAML.dump(),
+#         which is faster on all known cases and an order of magnitude faster 
+#         with complex structures.
+#
+# http://github.com/hallettj/zaml/tree/master
+#
+# Version 0.06
+# Authors: Markus Roberts, Jesse Hallet, Ian McIntosh, Igal Koshevoy
+# 
+
 require 'yaml'
 
 class ZAML
@@ -20,7 +33,6 @@ class ZAML
         @result = result
         @already_done = {}
         @done_count = 0
-        @indent = nil
         emit('---')
         end
     def nested(pre_emit=nil)
@@ -104,9 +116,12 @@ class Object
     def to_yaml_properties
         instance_variables.sort        # Default YAML behavior
         end
+    def zamlized_class_name(root)
+        "!ruby/#{root.name.downcase}" + ((self.class == root) ? '' : ":#{self.class.name}")
+        end
     def to_zaml(z)
         z.first_time_only(self) {
-            z.nested("!ruby/object:#{self.class.name}") {
+            z.nested(zamlized_class_name(Object)) {
                 instance_variables = to_yaml_properties
                 if instance_variables.empty?
                     z.emit(" {}")
@@ -161,14 +176,13 @@ class Numeric
 
 class Regexp
     def to_zaml(z)
-        z.emit("!ruby/regexp #{self.inspect}")
+        z.emit("#{zamlized_class_name(Regexp)} #{inspect}")
         end
     end
 
 class Exception
     def to_zaml(z)
-        z.emit("!ruby/exception")
-        z.emit(":#{self.class.name}") unless self.class == Exception
+        z.emit(zamlized_class_name(Exception))
         z.nested {
             z.nl("message: ")
             message.to_zaml(z)
@@ -205,10 +219,10 @@ class String
                 z.emit('|')
                 z.nested { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
                 z.nl
-              elsif not self =~ /[\\"\x00-\x1f]/
+              elsif (self =~ /^\w/) or (self[-1..-1] =~ /\w/) or (self =~ /[\\"\x00-\x1f]/)
+                z.emit("\"#{escaped_for_zaml}\"")
+              elsif 
                 z.emit(self)
-              else
-                z.emit('"#{escaped_for_zaml}"')
               end
             }
         end
@@ -257,7 +271,7 @@ class Date
 class Range
     def to_zaml(z)
         z.first_time_only(self) {
-            z.nested('!ruby/range') {
+            z.nested(zamlized_class_name(Range)) {
                 z.nl
                 z.emit('begin: ')
                 z.emit(first)
@@ -281,7 +295,6 @@ class Range
 if $0 == __FILE__
     #require 'test/unit'
 
-    reps = ARGV[0] ? ARGV[0].to_i : 0
     class My_class
         def initialize
             @string = 'string...'
@@ -293,17 +306,19 @@ if $0 == __FILE__
             end
         end
 
-    require 'pp'
-
-    my_range = 7..13
-    my_obj = My_class.new
-    my_dull_object = Object.new
-    my_bob = 'bob'
-    my_exception = Exception.new("Error message")
-    my_runtime_error = RuntimeError.new("This is a runtime error exception")
-    data = {
-      :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
-      :more_data => [:a_regexp =>/a.*(b+)/im,:an_exception => my_exception,:a_runtime_error => my_runtime_error, :a_long_string => %q{
+    if ARGV[0].nil?
+    
+        require 'pp'
+    
+        my_range = 7..13
+        my_obj = My_class.new
+        my_dull_object = Object.new
+        my_bob = 'bob'
+        my_exception = Exception.new("Error message")
+        my_runtime_error = RuntimeError.new("This is a runtime error exception")
+        data = {
+          :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
+          :more_data => [:a_regexp =>/a.*(b+)/im,:an_exception => my_exception,:a_runtime_error => my_runtime_error, :a_long_string => %q{
 
 I was in the grocery store. I saw a sign that said "pet supplies". 
 
@@ -313,36 +328,55 @@ Then I went outside and saw a sign that said "compact cars".
 
 -- Steven Wright
 }]
-      }
-
-    puts '*************************** original ***************************'
-    pp data
-
-    puts '*************************** YAML ***************************'
-    YAML.dump(data, STDOUT)
-
-    puts '*************************** ZAML ***************************'
-    ZAML.dump(data, STDOUT)
-
-    # Data -> ZAML Dump -> YAML Load
-    File.open('tmp-zaml','w') { |output| 
-        ZAML.dump(data, output)
-        }
-
-    puts '*************************** loaded ***************************'
-    File.open('tmp-zaml','r') { |input|
-        pp YAML.load(input)
-        }
-    if reps > 0 
+          }
+    
+        puts '*************************** original ***************************'
+        pp data
+    
+        puts '*************************** YAML ***************************'
+        YAML.dump(data, STDOUT)
+    
+        puts '*************************** ZAML ***************************'
+        ZAML.dump(data, STDOUT)
+    
+        # Data -> ZAML Dump -> YAML Load
+        File.open('tmp-zaml','w') { |output| 
+            ZAML.dump(data, output)
+            }
+    
+        puts '*************************** loaded ***************************'
+        File.open('tmp-zaml','r') { |input|
+            pp YAML.load(input)
+            }
+      elsif ARGV[0] == 'StephenCelisTest'
+        require 'benchmark'
+        Benchmark.bm do |x|
+            n = 10000
+            x.report('nil ') { n.times {           []; IO.new(1)  } }
+            x.report('yaml') { n.times { YAML.dump([], IO.new(1)) } }
+            x.report('zaml') { n.times { ZAML.dump([], IO.new(1)) } }
+            end
+      else
+        reps = ARGV[0] ? ARGV[0].to_i : 0
+        of_what = ARGV[1]
         big_data = []
         (1..reps).each { |i| 
-            big_data << i
-            big_data << My_class.new
+            if of_what
+                big_data << eval(of_what)
+              else
+                big_data << i
+                big_data << My_class.new
+              end
             }
         start = Time.now
         File.open('tmp-zaml','w') { |output| 
             ZAML.dump(big_data, output)
             }
-        print "#{reps} took #{Time.now-start}\n"
+        print "#{reps} of #{of_what} took #{Time.now-start} with zaml.\n"
+        start = Time.now
+        File.open('tmp-yaml','w') { |output| 
+            YAML.dump(big_data, output)
+            }
+        print "#{reps} of #{of_what} took #{Time.now-start} with yaml.\n"
         end
     end
