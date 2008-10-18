@@ -9,7 +9,7 @@ class ZAML
         z = new(result)
         stuff.to_zaml(z)
         z.nl
-        where.print z.result
+        where.print(z.result,"\n")
         end
     #
     # Object Methods
@@ -20,13 +20,13 @@ class ZAML
         @result = result
         @already_done = {}
         @done_count = 0
-        @indent = ''
+        @indent = nil
         emit('---')
         end
     def nested(pre_emit=nil)
         emit(pre_emit) if pre_emit
         old_indent = @indent
-        @indent += '  '
+        @indent = (@indent && @indent+'  ') || ''
         yield
         @indent = old_indent
         end
@@ -165,20 +165,50 @@ class Regexp
         end
     end
 
+class Exception
+    def to_zaml(z)
+        z.emit("!ruby/exception")
+        z.emit(":#{self.class.name}") unless self.class == Exception
+        z.nested {
+            z.nl("message: ")
+            message.to_zaml(z)
+            }
+        end
+    #
+    # Monkey patch for buggy Exception restore in YAML
+    #
+    #     This makes it work for now but is not very future-proof; if things
+    #     change we'll most likely want to remove this.  To mitigate the risks
+    #     as much as possible, we test for the bug before appling the patch.
+    #
+    if yaml_new(self, :tag, "message" => "blurp").message != "blurp"
+        def self.yaml_new( klass, tag, val )
+            o = YAML.object_maker( klass, {} ).exception(val.delete( 'message'))
+            val.each_pair do |k,v|
+                o.instance_variable_set("@#{k}", v)
+                end
+            o
+            end
+        end
+    end
+
 class String
     ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
+    def escaped_for_zaml
+        gsub( /\\/, "\\\\\\" ).
+        gsub( /"/, "\\\"" ).
+        gsub( /([\x00-\x1f])/ ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }
+        end
     def to_zaml(z)
         z.first_time_only(self) { 
-            if length < 80 and not self =~ /[\\"\x00-\x1f]/
+            if length > 80 
+                z.emit('|')
+                z.nested { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
+                z.nl
+              elsif not self =~ /[\\"\x00-\x1f]/
                 z.emit(self)
               else
-                z.emit('"')
-                z.emit(self.
-                  gsub( /\\/, "\\\\\\" ).
-                  gsub( /"/, "\\\"" ).
-                  gsub( /([\x00-\x1f])/ ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }
-                  )
-                z.emit('"')
+                z.emit('"#{escaped_for_zaml}"')
               end
             }
         end
@@ -269,9 +299,20 @@ if $0 == __FILE__
     my_obj = My_class.new
     my_dull_object = Object.new
     my_bob = 'bob'
+    my_exception = Exception.new("Error message")
+    my_runtime_error = RuntimeError.new("This is a runtime error exception")
     data = {
       :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
-      :more_data => [:a_regexp =>/a.*(b+)/im]
+      :more_data => [:a_regexp =>/a.*(b+)/im,:an_exception => my_exception,:a_runtime_error => my_runtime_error, :a_long_string => %q{
+
+I was in the grocery store. I saw a sign that said "pet supplies". 
+
+So I did.
+
+Then I went outside and saw a sign that said "compact cars".
+
+-- Steven Wright
+}]
       }
 
     puts '*************************** original ***************************'
