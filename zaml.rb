@@ -84,7 +84,7 @@ class ZAML
             #     a label this empty string has no effect, but if we do need 
             #     one we can modify the string to make the label show up in the 
             #     right place.
-            emit(@already_done[this_stuff] = String.new)
+            emit(@already_done[this_stuff] = String.new,:placeholder)
             #
             # Then we just emit the object itself, prefixed with the (possibly,
             #     but not for certain permanently) null label string we just 
@@ -92,14 +92,14 @@ class ZAML
             yield
             end
         end
-    def emit(s)
+    def emit(s,placeholder=false)
         @result << s
-        @recent_nl = false
+        @recent_nl = false unless placeholder
         end
     def nl(s='')
         unless @recent_nl 
             emit("\n")
-            emit(@indent)
+            emit(@indent) if @indent
             end
         emit(s)
         @recent_nl = true
@@ -250,14 +250,16 @@ class Hash
 class Array
     def to_zaml(z)
         z.first_time_only(self) {
-            if empty?
-                z.emit('[]')
-              else
-                each { |v|
-                    z.nl('- ')
-                    v.to_zaml(z)
-                }
-              end
+            z.nested {
+                if empty?
+                    z.emit('[]')
+                  else
+                    each { |v|
+                        z.nl('- ')
+                        v.to_zaml(z)
+                        }
+                  end
+                } 
             }
         end
     end
@@ -316,9 +318,7 @@ if $0 == __FILE__
         my_bob = 'bob'
         my_exception = Exception.new("Error message")
         my_runtime_error = RuntimeError.new("This is a runtime error exception")
-        data = {
-          :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
-          :more_data => [:a_regexp =>/a.*(b+)/im,:an_exception => my_exception,:a_runtime_error => my_runtime_error, :a_long_string => %q{
+        wright_joke = %q{
 
 I was in the grocery store. I saw a sign that said "pet supplies". 
 
@@ -327,7 +327,12 @@ So I did.
 Then I went outside and saw a sign that said "compact cars".
 
 -- Steven Wright
-}]
+}
+        a_box_of_cheese = [:cheese]
+        data = {
+          :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
+          :more_data => [:a_regexp =>/a.*(b+)/im,:an_exception => my_exception,:a_runtime_error => my_runtime_error, :a_long_string => wright_joke],
+          :nested_arrays => [[:one, 'One'],[:two, 'Two'],a_box_of_cheese,[:three, 'Three'],[:four, 'Four'],a_box_of_cheese,[:five, 'Five'],[:six, 'Six']]
           }
     
         puts '*************************** original ***************************'
