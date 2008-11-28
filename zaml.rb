@@ -7,13 +7,13 @@
 #
 # http://github.com/hallettj/zaml/tree/master
 #
-# Version 0.06
 # Authors: Markus Roberts, Jesse Hallet, Ian McIntosh, Igal Koshevoy
 # 
 
 require 'yaml'
 
 class ZAML
+    VERSION = 0.071
     #
     # Class Methods
     #
