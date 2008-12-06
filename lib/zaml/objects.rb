@@ -12,8 +12,8 @@ class Object
   end
   
   def to_zaml(z)
-    z.first_time_only(self) {
-      z.nested(zamlized_class_name(Object)) {
+    z.label(self) {
+      z.nest(zamlized_class_name(Object)) {
         instance_variables = to_yaml_properties
         if instance_variables.empty?
           z.emit("{}\n")
@@ -33,7 +33,7 @@ end
 class Exception
   def to_zaml(z)
     z.emit(zamlized_class_name(Exception))
-    z.nested {
+    z.nest {
       z.nl("message: ")
       message.to_zaml(z)
     }

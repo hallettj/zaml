@@ -56,12 +56,11 @@ class ZAML
       pairs.empty? ? (last == nil ? false : last) : pairs
     end
 
-    def dump(stuff, where="")
-      result = []
-      z = new(result)
-      stuff.to_zaml(z)
+    def dump(obj, where="")
+      z = new
+      obj.to_zaml(z)
       z.nl
-      where << result.join
+      where << z.to_s
     end
 
     def symbolize(str)
@@ -77,19 +76,18 @@ class ZAML
       end
     end
   end
-
-  attr_accessor :result
   
-  def initialize(result)
-    @used = Hash.new(false)
-    @result = result
-    @already_done = {}
-    @done_count = 0
+  attr_reader :lines
+  
+  def initialize
+    @lines = []
+    @labels = {}
+    @label_count = 0
     @indent = nil
     emit('--- ')
   end
   
-  def nested(pre_emit=nil, indent='  ')
+  def nest(pre_emit=nil, indent='  ')
     emit(pre_emit) if pre_emit
     old_indent = @indent
     @indent = @indent ? "#{@indent}#{indent}" : ''
@@ -97,7 +95,7 @@ class ZAML
     @indent = old_indent
   end
   
-  def first_time_only(stuff, array_or_hash=false)
+  def label(obj, with_newline=false)
     #
     # YAML only wants objects in the datastream once; if the same object 
     #    occurs more than once, we need to emit a label ("&idxxx") on the 
@@ -114,24 +112,27 @@ class ZAML
     #    which we will encounter a reference to the object as we serialize 
     #    it can be handled).
     #
-    this_stuff = stuff.object_id
-    if @already_done.has_key?(this_stuff)
+    id = obj.object_id
+    if @labels.has_key?(id)
       #
       # We have already serialized this object
       #
-      if @already_done[this_stuff].empty?
+      if @labels[id].empty?
         #
         # ...but this is the first time we have referred back to it,
         #     so we need to give it a unique label.  Note that the 
         #     string we are changing here has already been emitted, so
         #     this label will pop into existence at the appropriate 
         #     earlier point in the data stream.
-        @already_done[this_stuff][0..-1] = '&id%03d%s' % [@done_count += 1, array_or_hash ? " \n#{@indent}" : ' ']
+        
+        # ... some objects (ex the first member of an array or hash)
+        # require a newline after the label
+        @labels[id].replace('&id%03d%s' % [@label_count += 1, with_newline ? " \n#{@indent}" : ' '])
       end
       
-      # A back reference is just like the label, but with a '*' instead of a '&'
-      # and minus the trailing space
-      emit(@already_done[this_stuff].gsub(/&/,'*').rstrip)
+      # A back reference is just like the label, but with a '*' instead 
+      # of a '&' and minus the trailing space
+      emit(@labels[id].gsub(/&/,'*').rstrip)
     else
       #
       # We haven't serialized this object yet
@@ -141,7 +142,7 @@ class ZAML
       #     a label this empty string has no effect, but if we do need 
       #     one we can modify the string to make the label show up in the 
       #     right place.
-      emit(@already_done[this_stuff] = String.new,:placeholder)
+      emit(@labels[id] = String.new,:placeholder)
       #
       # Then we just emit the object itself, prefixed with the (possibly,
       #     but not for certain permanently) null label string we just 
@@ -151,7 +152,7 @@ class ZAML
   end
   
   def emit(s,placeholder=false)
-    @result << s.to_s
+    @lines << s.to_s
     @recent_nl = false unless placeholder
   end
   
@@ -163,6 +164,11 @@ class ZAML
     emit(s)
     @recent_nl = true
   end
+  
+  def to_s
+    @lines.join
+  end
+  
 end
 
 ################################################################
@@ -226,7 +232,7 @@ class String
     case
     when self =~ /\n/
       z.emit('|-')
-      z.nested { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
+      z.nest { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
       z.nl
     when self =~ /^\s/ || self =~ /\s$/
       z.emit(%Q{"#{self =~ /[\\"]/ ? gsub( /\\/, "\\\\\\" ).gsub( /"/, "\\\"" ) : self}"})
@@ -254,8 +260,8 @@ end
 
 class Range
   def to_zaml(z, as=nil)
-    z.first_time_only(self) {
-      z.nested(zamlized_class_name(Range)) {
+    z.label(self) {
+      z.nest(zamlized_class_name(Range)) {
         z.nl
         z.emit('begin: ')
         z.emit(first)
@@ -272,8 +278,8 @@ end
 
 class Hash
   def to_zaml(z, as=nil)
-    z.first_time_only(self, true) { 
-      z.nested {
+    z.label(self, true) { 
+      z.nest {
         if empty?
           z.emit('{}')
         else
@@ -291,8 +297,8 @@ end
 
 class Array
   def to_zaml(z, as=nil)
-    z.first_time_only(self, true) {
-      z.nested(false, as == :value ? '' : '  ') {
+    z.label(self, true) {
+      z.nest(false, as == :value ? '' : '  ') {
         if empty?
           z.emit('[]')
         else
