@@ -75,3 +75,11 @@ Rake::TestTask.new(:test) do |t|
   t.warning = true
 end
 
+desc 'Run benchmarks.'
+Rake::TestTask.new(:bench) do |t|
+  t.test_files = Dir.glob( File.join('test', ENV['pattern'] || '**/*_benchmarks.rb') )
+  t.verbose = true
+  t.warning = true
+end
+
+

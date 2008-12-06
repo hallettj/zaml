@@ -174,7 +174,7 @@ class Object
   end
   
   def zamlized_class_name(root)
-    "!ruby/#{root.name.downcase}" + ((self.class == root) ? '' : ":#{self.class.name}")
+    "!ruby/#{root.name.downcase}#{self.class == root ? ' ' : ":#{self.class.name} "}"
   end
   
   def to_zaml(z)
@@ -182,7 +182,7 @@ class Object
       z.nested(zamlized_class_name(Object)) {
         instance_variables = to_yaml_properties
         if instance_variables.empty?
-          z.emit(" {}")
+          z.emit("{}")
         else
           instance_variables.each { |v|
             z.nl
@@ -234,7 +234,7 @@ end
 
 class Regexp
   def to_zaml(z)
-    z.emit("#{zamlized_class_name(Regexp)} #{inspect}")
+    z.emit("#{zamlized_class_name(Regexp)}#{inspect}")
   end
 end
 
@@ -246,22 +246,6 @@ class Exception
       message.to_zaml(z)
     }
   end
-  
-  # Monkey patch for buggy Exception restore in YAML
-  #
-  #     This makes it work for now but is not very future-proof; if things
-  #     change we'll most likely want to remove this.  To mitigate the risks
-  #     as much as possible, we test for the bug before appling the patch.
-  #
-  # if yaml_new(self, :tag, "message" => "blurp").message != "blurp"
-  #   def self.yaml_new( klass, tag, val )
-  #     o = YAML.object_maker( klass, {} ).exception(val.delete( 'message'))
-  #     val.each_pair do |k,v|
-  #       o.instance_variable_set("@#{k}", v)
-  #     end
-  #     o
-  #   end
-  # end
 end
 
 class String
@@ -326,11 +310,18 @@ class Array
   end
 end
 
-class Date
-  def to_zaml(z)
-    z.emit(sprintf("!timestamp %s", self.to_s))
-  end
-end
+# class Time
+#   def to_zaml(z)
+#     # 2008-12-06 10:06:51.373758 -07:00
+#     z.emit(self.strftime("%Y-%m-%d %H:%M:%s "))
+#   end
+# end
+# 
+# class Date
+#   def to_zaml(z)
+#     z.emit(sprintf("!timestamp %s", self.to_s))
+#   end
+# end
 
 class Range
   def to_zaml(z)

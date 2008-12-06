@@ -1,6 +1,5 @@
 require File.dirname(__FILE__) + "/../lib/zaml"
 require 'test/unit'
-require 'tempfile'
 require 'yaml'
 
 class ZamlLoadTest < Test::Unit::TestCase
@@ -81,16 +80,6 @@ key: value
     }
     
     assert_equal expected, ZAML.load(gemrc)
-  end
-  
-  def test_load_time
-    tempfile = Tempfile.new("load_time")
-    tempfile << TEST_CASES["nested_hash"]
-    tempfile.close
-    
-    puts
-    system(%Q{ruby -e 'start = Time.now; require "yaml"; YAML.load_file("#{tempfile.path}"); puts "yaml:   \#{Time.now-start}"'})
-    system(%Q{ruby -e 'start = Time.now; require "lib/zaml"; ZAML.load_file("#{tempfile.path}"); puts "simple: \#{Time.now-start}"'})
   end
   
 end

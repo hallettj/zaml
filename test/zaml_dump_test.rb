@@ -1,7 +1,8 @@
 require File.dirname(__FILE__) + "/../lib/zaml"
 require 'test/unit'
-require 'tempfile'
+require 'benchmark'
 require 'yaml'
+require 'yaml_load_exception_patch'
 
 class My_class
   def initialize
@@ -63,19 +64,63 @@ class ZamlDumpTest < Test::Unit::TestCase
   }
   
   # a helper to test the round-trip dump
-  def dump_test(obj, msg=nil)
+  def dump_test(obj)
     dump = ZAML.dump(obj)
     
-    assert_equal YAML.dump(obj), dump, msg
-    assert_equal obj, YAML.load(dump), msg
+    assert_equal YAML.dump(obj), dump, "Dump discrepancy"
+    assert_equal obj, YAML.load(dump), "Reload discrepancy"
+  end
+  
+  # NOTE Exception does not reload an equal
+  # object, even with the load_exception_patch.
+  # Hence, this test is customized to check the
+  # essential parts.
+  def exception_dump_test(obj)
+    dump = ZAML.dump(obj)
+    assert_equal YAML.dump(obj), dump, "Exception dump discrepancy"
+    
+    reloaded = YAML.load(dump)
+    assert_equal obj.class, reloaded.class, "Exception reload discrepancy"
+    assert_equal obj.message, reloaded.message, "Exception reload discrepancy"
   end
   
   #
   # dump tests
   # 
   
+  def test_dump_object
+    dump_test(Object.new)
+    dump_test(My_class.new)
+  end
+  
+  def test_dump_nil
+    dump_test(nil)
+  end
+  
   def test_dump_symbol
     dump_test(:sym)
+  end
+  
+  def test_dump_true
+    dump_test(true)
+  end
+  
+  def test_dump_false
+    dump_test(false)
+  end
+  
+  def test_dump_numeric
+    dump_test(1)
+    dump_test(1.1)
+  end
+  
+  def test_dump_regexp
+    dump_test(/abc/)
+  end
+  
+  def test_dump_exception
+    exception_dump_test(Exception.new('error message'))
+    exception_dump_test(ArgumentError.new('error message'))
   end
   
   def test_dump_string
@@ -83,23 +128,6 @@ class ZamlDumpTest < Test::Unit::TestCase
     dump_test("   leading and trailing whitespace   ")
     dump_test("a string \n with newline")
     dump_test("a really long string" * 10)
-  end
-  
-  def test_dump_integer
-    dump_test(1)
-  end
-  
-  def test_dump_float
-    dump_test(1.1)
-  end
-  
-  def test_dump_boolean
-    dump_test(true)
-    dump_test(false)
-  end
-  
-  def test_dump_nil
-    dump_test(nil)
   end
   
   def test_dump_simple_hash
@@ -110,40 +138,21 @@ class ZamlDumpTest < Test::Unit::TestCase
     dump_test([1,2,3])
   end
   
+  # def test_dump_time
+  #   dump_test(Time.now)
+  # end
+  # 
+  # def test_dump_date
+  #   dump_test(Date.strptime('2008-08-08'))
+  # end
+  
+  def test_dump_range
+    dump_test(1..10)
+    dump_test('a'...'b')
+  end
+  
   # def test_dump_dump
   #   dump_test(COMPLEX_DATA)
-  # end
-    
-  # elsif ARGV[0] == 'StephenCelisTest'
-  #   require 'benchmark'
-  #   Benchmark.bm do |x|
-  #     n = 10000
-  #     x.report('nil ') { n.times {           []; IO.new(1)  } }
-  #     x.report('yaml') { n.times { YAML.dump([], IO.new(1)) } }
-  #     x.report('zaml') { n.times { ZAML.dump([], IO.new(1)) } }
-  #   end
-  # else
-  #   reps = ARGV[0] ? ARGV[0].to_i : 0
-  #   of_what = ARGV[1]
-  #   big_data = []
-  #   (1..reps).each { |i| 
-  #     if of_what
-  #       big_data << eval(of_what)
-  #     else
-  #       big_data << i
-  #       big_data << My_class.new
-  #     end
-  #   }
-  #   start = Time.now
-  #   File.open('tmp-zaml','w') { |output| 
-  #     ZAML.dump(big_data, output)
-  #   }
-  #   print "#{reps} of #{of_what} took #{Time.now-start} with zaml.\n"
-  #   start = Time.now
-  #   File.open('tmp-yaml','w') { |output| 
-  #     YAML.dump(big_data, output)
-  #   }
-  #   print "#{reps} of #{of_what} took #{Time.now-start} with yaml.\n"
   # end
 
 end
