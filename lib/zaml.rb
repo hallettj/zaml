@@ -251,22 +251,18 @@ end
 class String
   ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
   
-  def escaped_for_zaml
-    gsub( /\\/, "\\\\\\" ).
-    gsub( /"/, "\\\"" ).
-    gsub( /([\x00-\x1f])/ ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }
-  end
-  
   def to_zaml(z)
-    z.first_time_only(self) { 
+    z.first_time_only(self) {
       case
-      when self =~ /\n/ # length > 80 
+      when self =~ /\n/
         z.emit('|-')
         z.nested { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
         z.nl
       when self =~ /^\s/ || self =~ /\s$/
-        # elsif (self =~ /^\w/) or (self[-1..-1] =~ /\w/) or (self =~ /[\\"\x00-\x1f]/)
-        z.emit("\"#{escaped_for_zaml}\"")
+        z.emit(%Q{"#{self =~ /[\\"]/ ? gsub( /\\/, "\\\\\\" ).gsub( /"/, "\\\"" ) : self}"})
+      when self =~ /[\x00-\x1f]/
+        z.emit("!binary |\n")
+        z.emit([self].pack("m*"))
       else 
         z.emit(self)
       end

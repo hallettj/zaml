@@ -116,6 +116,7 @@ class ZamlDumpTest < Test::Unit::TestCase
   
   def test_dump_regexp
     dump_test(/abc/)
+    dump_test(/a.*(b+)/im)
   end
   
   def test_dump_exception
@@ -126,8 +127,19 @@ class ZamlDumpTest < Test::Unit::TestCase
   def test_dump_string
     dump_test('str')
     dump_test("   leading and trailing whitespace   ")
+    
     dump_test("a string \n with newline")
+    dump_test("a string with 'quotes'")
+    dump_test("a string with \"double quotes\"")
+    dump_test("a string with \\ escape")
+    
     dump_test("a really long string" * 10)
+    dump_test("a really long string \n with newline" * 10)
+    dump_test("a really long string with 'quotes'" * 10)
+    dump_test("a really long string with \"double quotes\"" * 10)
+    dump_test("a really long string with \\ escape" * 10)
+    
+    dump_test("string with binary data \x00 \x01 \x02")
   end
   
   def test_dump_simple_hash
