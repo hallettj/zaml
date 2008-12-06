@@ -71,6 +71,13 @@ class ZamlDumpTest < Test::Unit::TestCase
     assert_equal obj, YAML.load(dump), "Reload discrepancy"
   end
   
+  # bare objects can't be directly compared because their
+  # object ids are different.
+  def object_dump_test(obj)
+    dump = ZAML.dump(obj)
+    assert_equal YAML.dump(obj), dump, "Object dump discrepancy"
+  end
+  
   # NOTE Exception does not reload an equal
   # object, even with the load_exception_patch.
   # Hence, this test is customized to check the
@@ -89,8 +96,8 @@ class ZamlDumpTest < Test::Unit::TestCase
   # 
   
   def test_dump_object
-    dump_test(Object.new)
-    dump_test(My_class.new)
+    object_dump_test(Object.new)
+    object_dump_test(My_class.new)
   end
   
   def test_dump_nil

@@ -57,10 +57,11 @@ class ZAML
     end
 
     def dump(stuff, where="")
-      z = new(where)
+      result = []
+      z = new(result)
       stuff.to_zaml(z)
       z.nl
-      where
+      where << result.join
     end
 
     def symbolize(str)
@@ -127,8 +128,10 @@ class ZAML
         #     earlier point in the data stream.
         @already_done[this_stuff][0..-1] = '&id%03d ' % (@done_count += 1) 
       end
-      # A back reference is just like the label, but with a '*' instead of a '*'
-      emit(@already_done[this_stuff].gsub(/&/,'*'))
+      
+      # A back reference is just like the label, but with a '*' instead of a '&'
+      # and minus the trailing space
+      emit(@already_done[this_stuff].gsub(/&/,'*').chomp(' '))
     else
       #
       # We haven't serialized this object yet
@@ -182,7 +185,7 @@ class Object
       z.nested(zamlized_class_name(Object)) {
         instance_variables = to_yaml_properties
         if instance_variables.empty?
-          z.emit("{}")
+          z.emit("{}\n")
         else
           instance_variables.each { |v|
             z.nl
