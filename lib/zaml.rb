@@ -7,7 +7,7 @@
 #
 # http://github.com/hallettj/zaml/tree/master
 #
-# Authors: Markus Roberts, Jesse Hallet, Ian McIntosh, Igal Koshevoy
+# Authors: Markus Roberts, Jesse Hallet, Ian McIntosh, Igal Koshevoy, Simon Chiang
 # 
 
 class ZAML
@@ -56,12 +56,11 @@ class ZAML
       pairs.empty? ? (last == nil ? false : last) : pairs
     end
 
-    def dump(stuff, where)
-      result = []
-      z = new(result)
+    def dump(stuff, where="")
+      z = new(where)
       stuff.to_zaml(z)
       z.nl
-      where.print(z.result,"\n")
+      where
     end
 
     def symbolize(str)
@@ -78,17 +77,17 @@ class ZAML
     end
   end
 
-  #
-  # Object Methods
-  #
   attr_accessor :result
+  
   def initialize(result)
     @used = Hash.new(false)
     @result = result
     @already_done = {}
     @done_count = 0
-    emit('---')
+    @indent = nil
+    emit('--- ')
   end
+  
   def nested(pre_emit=nil)
     emit(pre_emit) if pre_emit
     old_indent = @indent
@@ -96,6 +95,7 @@ class ZAML
     yield
     @indent = old_indent
   end
+  
   def first_time_only(stuff)
     #
     # YAML only wants objects in the datastream once; if the same object 
@@ -146,10 +146,12 @@ class ZAML
       yield
     end
   end
+  
   def emit(s,placeholder=false)
     @result << s
     @recent_nl = false unless placeholder
   end
+  
   def nl(s='')
     unless @recent_nl 
       emit("\n")
@@ -170,9 +172,11 @@ class Object
   def to_yaml_properties
     instance_variables.sort        # Default YAML behavior
   end
+  
   def zamlized_class_name(root)
     "!ruby/#{root.name.downcase}" + ((self.class == root) ? '' : ":#{self.class.name}")
   end
+  
   def to_zaml(z)
     z.first_time_only(self) {
       z.nested(zamlized_class_name(Object)) {
@@ -242,39 +246,41 @@ class Exception
       message.to_zaml(z)
     }
   end
-  #
+  
   # Monkey patch for buggy Exception restore in YAML
   #
   #     This makes it work for now but is not very future-proof; if things
   #     change we'll most likely want to remove this.  To mitigate the risks
   #     as much as possible, we test for the bug before appling the patch.
   #
-  if yaml_new(self, :tag, "message" => "blurp").message != "blurp"
-    def self.yaml_new( klass, tag, val )
-      o = YAML.object_maker( klass, {} ).exception(val.delete( 'message'))
-      val.each_pair do |k,v|
-        o.instance_variable_set("@#{k}", v)
-      end
-      o
-    end
-  end
+  # if yaml_new(self, :tag, "message" => "blurp").message != "blurp"
+  #   def self.yaml_new( klass, tag, val )
+  #     o = YAML.object_maker( klass, {} ).exception(val.delete( 'message'))
+  #     val.each_pair do |k,v|
+  #       o.instance_variable_set("@#{k}", v)
+  #     end
+  #     o
+  #   end
+  # end
 end
 
 class String
   ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
+  
   def escaped_for_zaml
     gsub( /\\/, "\\\\\\" ).
     gsub( /"/, "\\\"" ).
     gsub( /([\x00-\x1f])/ ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }
   end
+  
   def to_zaml(z)
     z.first_time_only(self) { 
       if length > 80 
         z.emit('|')
         z.nested { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
         z.nl
-      elsif (self =~ /^\w/) or (self[-1..-1] =~ /\w/) or (self =~ /[\\"\x00-\x1f]/)
-        z.emit("\"#{escaped_for_zaml}\"")
+      # elsif (self =~ /^\w/) or (self[-1..-1] =~ /\w/) or (self =~ /[\\"\x00-\x1f]/)
+      #   z.emit("\"#{escaped_for_zaml}\"")
       elsif 
         z.emit(self)
       end

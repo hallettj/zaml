@@ -36,7 +36,7 @@ another: value
   
   TEST_CASES.each_pair do |name, test_case|
     define_method("test_load_compatibility_for_#{name}") do
-      assert_equal YAML.load(test_case), SimpleYaml.load(test_case)
+      assert_equal YAML.load(test_case), ZAML.load(test_case)
     end
   end
   
@@ -54,7 +54,7 @@ key: value
   
   FAIL_CASES.each_pair do |name, test_case|
     define_method("test_load_fails_for_#{name}") do
-      assert_raise(RuntimeError) { SimpleYaml.load(test_case) }
+      assert_raise(RuntimeError) { ZAML.load(test_case) }
     end
   end
   
@@ -80,7 +80,7 @@ key: value
       :backtrace => false
     }
     
-    assert_equal expected, SimpleYaml.load(gemrc)
+    assert_equal expected, ZAML.load(gemrc)
   end
   
   def test_load_time
@@ -90,7 +90,7 @@ key: value
     
     puts
     system(%Q{ruby -e 'start = Time.now; require "yaml"; YAML.load_file("#{tempfile.path}"); puts "yaml:   \#{Time.now-start}"'})
-    system(%Q{ruby -e 'start = Time.now; require "lib/simple_yaml"; SimpleYaml.load_file("#{tempfile.path}"); puts "simple: \#{Time.now-start}"'})
+    system(%Q{ruby -e 'start = Time.now; require "lib/zaml"; ZAML.load_file("#{tempfile.path}"); puts "simple: \#{Time.now-start}"'})
   end
   
 end
