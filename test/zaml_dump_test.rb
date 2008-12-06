@@ -34,31 +34,84 @@ class ZamlDumpTest < Test::Unit::TestCase
     -- Steven Wright
   }
   a_box_of_cheese = [:cheese]
-  DATA = {
-    :data => [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, {my_obj => 'obj is the key!'}, {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8],
-    :more_data => [:a_regexp =>/a.*(b+)/im,:an_exception => my_exception,:a_runtime_error => my_runtime_error, :a_long_string => wright_joke],
-    :nested_arrays => [[:one, 'One'],[:two, 'Two'],a_box_of_cheese,[:three, 'Three'],[:four, 'Four'],a_box_of_cheese,[:five, 'Five'],[:six, 'Six']]
+  
+  DATA = [1, my_range, my_obj, my_bob, my_dull_object, 2, 'test', "   funky\n test\n", true, false, 
+    {my_obj => 'obj is the key!'}, 
+    {:bob => 6.8, :sam => 9.7, :subhash => {:sh1 => 'one', :sh2 => 'two'}}, 
+    6, my_bob, my_obj, my_range, 'bob', 1..10, 0...8]
+  
+  MORE_DATA = [{
+    :a_regexp => /a.*(b+)/im,
+    :an_exception => my_exception,
+    :a_runtime_error => my_runtime_error, 
+    :a_long_string => wright_joke}]
+  
+  NESTED_ARRAYS = [
+    [:one, 'One'],
+    [:two, 'Two'],
+    a_box_of_cheese,
+    [:three, 'Three'],
+    [:four, 'Four'],
+    a_box_of_cheese,
+    [:five, 'Five'],
+    [:six, 'Six']]
+    
+  COMPLEX_DATA = {
+    :data => DATA,
+    :more_data => MORE_DATA,
+    :nested_arrays => NESTED_ARRAYS
   }
   
-  def compatibility_test(obj, msg=nil)
+  # a helper to test the round-trip dump
+  def dump_test(obj, msg=nil)
     dump = ZAML.dump(obj)
     
     assert_equal YAML.dump(obj), dump, msg
     assert_equal obj, YAML.load(dump), msg
   end
   
-  def test_dump_compatibility_for_simple_hash
-    compatibility_test({:key => 'value'})
+  #
+  # dump tests
+  # 
+  
+  def test_dump_symbol
+    dump_test(:sym)
   end
   
-  def test_dump_compatibility_for_simple_array
-    compatibility_test([1,2,3])
+  def test_dump_string
+    dump_test('str')
+    dump_test("   leading and trailing whitespace   ")
+    dump_test("a string \n with newline")
+    dump_test("a really long string" * 10)
   end
   
-  # def test_dump_compatibility
-  #   dump = ZAML.dump(DATA)
-  #   assert_equal YAML.dump(DATA), dump
-  #   assert_equal DATA, YAML.load(dump)
+  def test_dump_integer
+    dump_test(1)
+  end
+  
+  def test_dump_float
+    dump_test(1.1)
+  end
+  
+  def test_dump_boolean
+    dump_test(true)
+    dump_test(false)
+  end
+  
+  def test_dump_nil
+    dump_test(nil)
+  end
+  
+  def test_dump_simple_hash
+    dump_test({:key => 'value'})
+  end
+  
+  def test_dump_simple_array
+    dump_test([1,2,3])
+  end
+  
+  # def test_dump_dump
+  #   dump_test(COMPLEX_DATA)
   # end
     
   # elsif ARGV[0] == 'StephenCelisTest'

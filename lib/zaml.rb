@@ -148,7 +148,7 @@ class ZAML
   end
   
   def emit(s,placeholder=false)
-    @result << s
+    @result << s.to_s
     @recent_nl = false unless placeholder
   end
   
@@ -275,13 +275,15 @@ class String
   
   def to_zaml(z)
     z.first_time_only(self) { 
-      if length > 80 
-        z.emit('|')
+      case
+      when self =~ /\n/ # length > 80 
+        z.emit('|-')
         z.nested { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
         z.nl
-      # elsif (self =~ /^\w/) or (self[-1..-1] =~ /\w/) or (self =~ /[\\"\x00-\x1f]/)
-      #   z.emit("\"#{escaped_for_zaml}\"")
-      elsif 
+      when self =~ /^\s/ || self =~ /\s$/
+        # elsif (self =~ /^\w/) or (self[-1..-1] =~ /\w/) or (self =~ /[\\"\x00-\x1f]/)
+        z.emit("\"#{escaped_for_zaml}\"")
+      else 
         z.emit(self)
       end
     }
