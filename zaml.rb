@@ -7,7 +7,7 @@
 #
 # http://github.com/hallettj/zaml/tree/master
 #
-# Authors: Markus Roberts, Jesse Hallet, Ian McIntosh, Igal Koshevoy
+# Authors: Markus Roberts, Jesse Hallett, Ian McIntosh, Igal Koshevoy
 # 
 
 require 'yaml'
