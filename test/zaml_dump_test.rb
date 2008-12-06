@@ -5,6 +5,20 @@ require 'zaml'
 
 class ZamlDumpTest < Test::Unit::TestCase
   
+  HASH = {
+    :nil => nil,
+    :sym => :value, 
+    :true => true,
+    :false => false,
+    :int => 100,
+    :float => 1.1,
+    :regexp => /abc/,
+    'str' => 'value', 
+    :range => 1..10
+  }
+  
+  ARRAY = [nil, :sym, true, false, 100, 1.1, /abc/, 'str', 1..10]
+  
   # a helper to test the round-trip dump
   def dump_test(obj)
     dump = ZAML.dump(obj)
@@ -61,14 +75,6 @@ class ZamlDumpTest < Test::Unit::TestCase
     dump_test("string with binary data \x00 \x01 \x02")
   end
   
-  def test_dump_simple_hash
-    dump_test({:key => 'value'})
-  end
-  
-  def test_dump_simple_array
-    dump_test([1,2,3])
-  end
-  
   # def test_dump_time
   #   dump_test(Time.now)
   # end
@@ -80,6 +86,55 @@ class ZamlDumpTest < Test::Unit::TestCase
   def test_dump_range
     dump_test(1..10)
     dump_test('a'...'b')
+  end
+  
+  #
+  # hash
+  #
+  
+  def test_dump_simple_hash
+    dump_test({:key => 'value'})
+  end
+  
+  def test_dump_hash
+    dump_test(HASH)
+  end
+  
+  def test_dump_simple_nested_hash
+    dump_test({:hash => {:key => 'value'}, :array => [1,2,3]})
+  end
+  
+  def test_dump_nested_hash
+    dump_test(HASH.merge(:hash => {:key => 'value'}, :array => [1,2,3]))
+  end
+  
+  def test_dump_self_referential_hash
+    dump_test(HASH.merge(:hash => HASH))
+  end
+  
+  #
+  # array
+  #
+  
+  def test_dump_simple_array
+    dump_test([1,2,3])
+  end
+  
+  def test_dump_array
+    dump_test(ARRAY)
+  end
+  
+  def test_dump_simple_nested_array
+    dump_test([{:key => 'value'}, [1,2,3]])
+  end
+  
+  def test_dump_nested_array
+    dump_test(ARRAY.concat([{:key => 'value'}, [1,2,3]]))
+  end
+  
+  def test_dump_self_referential_array
+    array = ARRAY + [ARRAY]
+    dump_test(array)
   end
   
 end
