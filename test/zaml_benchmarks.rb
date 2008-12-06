@@ -1,8 +1,9 @@
-require File.dirname(__FILE__) + "/../lib/zaml"
 require 'test/unit'
 require 'benchmark'
 require 'yaml'
 require 'tempfile'
+
+require 'zaml'
 
 class ZamlBenchmarks < Test::Unit::TestCase
   

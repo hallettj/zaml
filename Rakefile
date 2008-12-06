@@ -70,16 +70,13 @@ task :default => :test
 
 desc 'Run tests.'
 Rake::TestTask.new(:test) do |t|
-  t.test_files = Dir.glob( File.join('test', ENV['pattern'] || '**/*_test.rb') )
+  t.test_files = if ENV['all']
+    Dir.glob( File.join('test', '**/*.rb') )
+  else
+    ["test/zaml_dump_test.rb", "test/zaml_load_test.rb"]
+  end
+  
   t.verbose = true
   t.warning = true
 end
-
-desc 'Run benchmarks.'
-Rake::TestTask.new(:bench) do |t|
-  t.test_files = Dir.glob( File.join('test', ENV['pattern'] || '**/*_benchmarks.rb') )
-  t.verbose = true
-  t.warning = true
-end
-
 
