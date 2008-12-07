@@ -119,6 +119,11 @@ class ZamlDumpTest < Test::Unit::TestCase
     dump_test("string with binary data \x00 \x01 \x02")
     dump_test("   funky\n test\n")
   end
+
+  def test_dump_strings_that_resemble_literals
+    dump_test("true")
+    dump_test("false")
+  end
   
   # def test_dump_time
   #   dump_test(Time.now)
