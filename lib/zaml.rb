@@ -14,66 +14,11 @@ class ZAML
   VERSION = 0.071
 
   class << self
-    KEY_VALUE = /^([^ -].*?):\s*(.*?)\s*$/
-    ARRAY_VALUE = /^\s*-\s*([^-].*?)\s*$/
-    HASH_VALUE = /^\s+(.+?):\s*(.+?)\s*$/
-    COMMENT = /^\s*(#.*?)?$/
-    DOCUMENT = /^---\s*$/
-
-    def load_file(path)
-      load File.read(path)
-    end
-
-    def load(str)
-      pairs = {}
-      last = nil
-
-      str.split(/\r?\n/).reverse_each do |line|
-        case line
-        when KEY_VALUE
-          key = symbolize($1)
-          if $2.empty?
-            raise "format error for #{key}" unless last
-            pairs[key] = last
-            last = nil
-          else
-            raise "format error for #{key}" if last
-            pairs[key] = objectify($2)
-          end
-
-        when ARRAY_VALUE
-          # will cause error if last is {} (no method unshift)
-          (last ||= []).unshift(objectify($1))
-        when HASH_VALUE
-          # will cause error if last is [] (str/sym as index)
-          (last ||= {})[symbolize($1)] = objectify($2)
-        when COMMENT then next
-        when DOCUMENT then break
-        else raise "unparseable line: #{line.inspect}"
-        end
-      end
-
-      pairs.empty? ? (last == nil ? false : last) : pairs
-    end
-
     def dump(obj, where="")
       z = new
       obj.to_zaml(z)
       z.nl
       where << z.to_s
-    end
-
-    def symbolize(str)
-      str[0] == ?: ? str[1, str.length-1].to_sym : str
-    end
-
-    def objectify(str)
-      case str
-      when /^true$/i then true
-      when /^false$/i then false
-      when /^\d+(\.\d+)?$/ then $1 ? str.to_f : str.to_i
-      else symbolize(str)
-      end
     end
   end
   
@@ -173,13 +118,35 @@ end
 
 ################################################################
 #
-#   Shared Behavior
+#   Behavior for custom classes
 #
 ################################################################
 
 class Object
+  def to_yaml_properties
+    instance_variables.sort        # Default YAML behavior
+  end
+  
   def zamlized_class_name(root)
     "!ruby/#{root.name.downcase}#{self.class == root ? ' ' : ":#{self.class.name} "}"
+  end
+  
+  def to_zaml(z)
+    z.label(self) {
+      z.nest(zamlized_class_name(Object)) {
+        instance_variables = to_yaml_properties
+        if instance_variables.empty?
+          z.emit("{}\n")
+        else
+          instance_variables.each { |v|
+            z.nl
+            v[1..-1].to_zaml(z)       # Remove leading '@'
+            z.emit(': ')
+            instance_variable_get(v).to_zaml(z)
+          }
+        end
+      }
+    }
   end
 end
 
@@ -216,6 +183,16 @@ end
 class Numeric
   def to_zaml(z, as=nil)
     z.emit(self.to_s)
+  end
+end
+
+class Exception
+  def to_zaml(z)
+    z.emit(zamlized_class_name(Exception))
+    z.nest {
+      z.nl("message: ")
+      message.to_zaml(z)
+    }
   end
 end
 
