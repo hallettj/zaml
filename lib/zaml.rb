@@ -11,7 +11,7 @@
 # 
 
 class ZAML
-  VERSION = 0.071
+  VERSION = "0.1.0"
 
   class << self
     def dump(obj, where="")
