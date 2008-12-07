@@ -32,10 +32,10 @@ class ZAML
     emit('--- ')
   end
   
-  def nest(pre_emit=nil, indent='  ')
+  def nest(pre_emit=nil)
     emit(pre_emit) if pre_emit
     old_indent = @indent
-    @indent = @indent ? "#{@indent}#{indent}" : ''
+    @indent = @indent ? "#{@indent}  " : ''
     yield
     @indent = old_indent
   end
@@ -157,31 +157,31 @@ end
 ################################################################
 
 class NilClass
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.emit('')        # NOTE: blank turns into nil in YAML.load
   end
 end
 
 class Symbol
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.emit(self.inspect)
   end
 end
 
 class TrueClass
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.emit('true')
   end
 end
 
 class FalseClass
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.emit('false')
   end
 end
 
 class Numeric
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.emit(self.to_s)
   end
 end
@@ -197,7 +197,7 @@ class Exception
 end
 
 class Regexp
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.emit("#{zamlized_class_name(Regexp)}#{inspect}")
   end
 end
@@ -205,7 +205,7 @@ end
 class String
   ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
   
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     case
     when self =~ /\n/
       z.emit('|-')
@@ -223,20 +223,20 @@ class String
 end
 
 # class Time
-#   def to_zaml(z, as=nil)
+#   def to_zaml(z)
 #     # 2008-12-06 10:06:51.373758 -07:00
 #     z.emit(self.strftime("%Y-%m-%d %H:%M:%s "))
 #   end
 # end
 # 
 # class Date
-#   def to_zaml(z, as=nil)
+#   def to_zaml(z)
 #     z.emit(sprintf("!timestamp %s", self.to_s))
 #   end
 # end
 
 class Range
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.label(self) {
       z.nest(zamlized_class_name(Range)) {
         z.nl
@@ -254,7 +254,7 @@ class Range
 end
 
 class Hash
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.label(self, true) { 
       z.nest {
         if empty?
@@ -262,9 +262,9 @@ class Hash
         else
           each_pair { |k, v|
             z.nl
-            k.to_zaml(z, :key)
+            k.to_zaml(z)
             z.emit(': ')
-            v.to_zaml(z, :value)
+            v.to_zaml(z)
           }
         end
       }
@@ -273,9 +273,9 @@ class Hash
 end
 
 class Array
-  def to_zaml(z, as=nil)
+  def to_zaml(z)
     z.label(self, true) {
-      z.nest(false, as == :value ? '' : '  ') {
+      z.nest {
         if empty?
           z.emit('[]')
         else

@@ -151,16 +151,16 @@ class ZamlDumpTest < Test::Unit::TestCase
   end
   
   def test_dump_simple_nested_hash
-    dump_test({:hash => {:key => 'value'}, :array => [1,2,3]})
+    dump_test({:hash => {:key => 'value'}, :array => [1,2,3]}, false)
   end
   
   def test_dump_nested_hash
-    dump_test(HASH.merge(:hash => {:hash => {:key => 'value'}}, :array => [[1,2,3]]))
+    dump_test(HASH.merge(:hash => {:hash => {:key => 'value'}}, :array => [[1,2,3]]), false)
   end
   
   def test_dump_self_referential_hash
     array = ARRAY + [ARRAY]
-    dump_test(HASH.merge(:hash => HASH, :array => array))
+    dump_test(HASH.merge(:hash => HASH, :array => array), false)
   end
   
   # def test_dump_singlular_self_referential_hash
@@ -186,12 +186,12 @@ class ZamlDumpTest < Test::Unit::TestCase
   end
   
   def test_dump_nested_array
-    dump_test(ARRAY.concat([{:array => [1,2,3]}, [[1,2,3]]]))
+    dump_test(ARRAY.concat([{:array => [1,2,3]}, [[1,2,3]]]), false)
   end
   
   def test_dump_self_referential_array
     array = ARRAY + [ARRAY, HASH.merge(:hash => HASH)]
-    dump_test(array)
+    dump_test(array, false)
   end
   
   # def test_dump_singlular_self_referential_array
@@ -249,8 +249,20 @@ class ZamlDumpTest < Test::Unit::TestCase
     :nested_arrays => NESTED_ARRAYS
   }
   
+  # def test_dump_DATA
+  #   dump_test(DATA, false)
+  # end
+
+  # def test_dump_MORE_DATA
+  #   dump_test(MORE_DATA, false)
+  # end
+  
+  # def test_dump_NESTED_ARRAYS
+  #   dump_test(NESTED_ARRAYS, false)
+  # end
+  
   # def test_dump_COMPLEX_DATA
-  #   dump_test(COMPLEX_DATA)
+  #   dump_test(COMPLEX_DATA, false)
   # end
   
 end
