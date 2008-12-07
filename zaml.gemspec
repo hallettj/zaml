@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "zaml"
   s.version = "0.1.0"
-  s.authors = ["Jesse Hallett", "Simon Chiang"]
+  s.authors = ["Markus Roberts", "Jesse Hallet", "Ian McIntosh", "Igal Koshevoy", "Simon Chiang"]
   #s.email = "your.email@pubfactory.edu"
   s.homepage = "http://github.com/hallettj/zaml/tree/master"
   s.platform = Gem::Platform::RUBY
@@ -19,5 +19,6 @@ Gem::Specification.new do |s|
   # check this manifest using 'rake :print_manifest'
   s.files = %W{
     lib/zaml.rb
+    lib/yaml_load_exception_patch.rb
   }
 end
