@@ -5,7 +5,7 @@
 #         which is faster on all known cases and an order of magnitude faster 
 #         with complex structures.
 #
-# http://github.com/hallettj/zaml/tree/master
+# http://github.com/hallettj/zaml
 #
 # Authors: Markus Roberts, Jesse Hallett, Ian McIntosh, Igal Koshevoy, Simon Chiang
 # 
