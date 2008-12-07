@@ -36,19 +36,17 @@ class ZamlDumpTest < Test::Unit::TestCase
   # some helpers
   #
   
-  # tests a round-trip dump, and exact YAML equality
-  def dump_test(obj)
+  # tests for exact YAML dump equality.  returns the ZAML dump
+  def yaml_equality_test(obj)
     dump = ZAML.dump(obj)
-    
     assert_equal YAML.dump(obj), dump, "Dump discrepancy"
-    assert_equal obj, YAML.load(dump), "Reload discrepancy"
+    dump
   end
   
-  # bare objects can't be directly compared because their
-  # object ids are different.
-  def object_dump_test(obj)
-    dump = ZAML.dump(obj)
-    assert_equal YAML.dump(obj), dump, "Object dump discrepancy"
+  # tests a round-trip dump, and exact YAML equality
+  def dump_test(obj)
+    dump = yaml_equality_test(obj)
+    assert_equal obj, YAML.load(dump), "Reload discrepancy"
   end
   
   # NOTE Exception does not reload an equal
@@ -56,8 +54,7 @@ class ZamlDumpTest < Test::Unit::TestCase
   # Hence, this test is customized to check the
   # essential parts.
   def exception_dump_test(obj)
-    dump = ZAML.dump(obj)
-    assert_equal YAML.dump(obj), dump, "Exception dump discrepancy"
+    dump = yaml_equality_test(obj)
     
     reloaded = YAML.load(dump)
     assert_equal obj.class, reloaded.class, "Exception reload discrepancy"
@@ -69,8 +66,8 @@ class ZamlDumpTest < Test::Unit::TestCase
   #
   
   def test_dump_object
-    object_dump_test(Object.new)
-    object_dump_test(My_class.new)
+    yaml_equality_test(Object.new)
+    yaml_equality_test(My_class.new)
   end
   
   def test_dump_nil
@@ -248,19 +245,19 @@ class ZamlDumpTest < Test::Unit::TestCase
   }
   
   def test_dump_DATA
-    assert_equal YAML.dump(DATA), ZAML.dump(DATA)
+    yaml_equality_test(DATA)
   end
   
   def test_dump_MORE_DATA
-    assert_equal YAML.dump(MORE_DATA), ZAML.dump(MORE_DATA)
+    yaml_equality_test(MORE_DATA)
   end
   
   def test_dump_NESTED_ARRAYS
-    assert_equal YAML.dump(NESTED_ARRAYS), ZAML.dump(NESTED_ARRAYS)
+    yaml_equality_test(NESTED_ARRAYS)
   end
   
   def test_dump_COMPLEX_DATA
-    assert_equal YAML.dump(COMPLEX_DATA), ZAML.dump(COMPLEX_DATA)
+    yaml_equality_test(COMPLEX_DATA)
   end
   
 end

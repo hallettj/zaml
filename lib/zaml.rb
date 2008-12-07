@@ -62,10 +62,9 @@ class ZAML
     @indent = current_indent
   end
   
+  # unnesting for array values in hashes
   def unnest(obj)
     current_indent = @indent
-    
-    # unnest for array hash value
     if obj.kind_of?(Array)
       @indent = @indent.chomp('  ')
       @indent = nil if @indent == current_indent
