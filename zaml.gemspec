@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
   s.summary      = "zaml"
   s.require_path = "lib"
   s.has_rdoc     = true
+  s.rdoc_options = ["--main", "README"]
   
   # list extra rdoc files here.
   s.extra_rdoc_files = %W{
@@ -25,5 +26,10 @@ Gem::Specification.new do |s|
     LICENSE
     lib/zaml.rb
     lib/yaml_load_exception_patch.rb
+  }
+
+  s.test_files = %W{
+    test/zaml_benchmarks.rb
+    test/zaml_test.rb
   }
 end
