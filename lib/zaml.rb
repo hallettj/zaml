@@ -22,6 +22,28 @@ class ZAML
     end
   end
   
+  class Label
+    attr_reader :indent
+    attr_accessor :n
+    
+    def initialize(indent)
+      @indent = indent
+      @n = nil
+    end
+    
+    def label
+      n ? ('&id%03d%s' % [n, indent]) : ''
+    end
+    
+    def reference
+      n ? ('*id%03d' % n) : ''
+    end
+    
+    def to_s
+      label
+    end
+  end
+  
   attr_reader :lines
   
   def initialize
@@ -34,10 +56,22 @@ class ZAML
   
   def nest(pre_emit=nil)
     emit(pre_emit) if pre_emit
-    old_indent = @indent
+    current_indent = @indent
     @indent = @indent ? "#{@indent}  " : ''
     yield
-    @indent = old_indent
+    @indent = current_indent
+  end
+  
+  def unnest(obj)
+    current_indent = @indent
+    
+    # unnest for array hash value
+    if obj.kind_of?(Array)
+      @indent = @indent.chomp('  ')
+      @indent = nil if @indent == current_indent
+    end
+    yield
+    @indent = current_indent
   end
   
   def label(obj, with_newline=false)
@@ -62,7 +96,7 @@ class ZAML
       #
       # We have already serialized this object
       #
-      if @labels[id].empty?
+      unless @labels[id].n
         #
         # ...but this is the first time we have referred back to it,
         #     so we need to give it a unique label.  Note that the 
@@ -72,12 +106,13 @@ class ZAML
         
         # ... some objects (ex the first member of an array or hash)
         # require a newline after the label
-        @labels[id].replace('&id%03d%s' % [@label_count += 1, with_newline ? " \n#{@indent}" : ' '])
+        
+        @labels[id].n = (@label_count += 1)
       end
       
       # A back reference is just like the label, but with a '*' instead 
       # of a '&' and minus the trailing space
-      emit(@labels[id].gsub(/&/,'*').rstrip)
+      emit(@labels[id].reference)
     else
       #
       # We haven't serialized this object yet
@@ -87,7 +122,7 @@ class ZAML
       #     a label this empty string has no effect, but if we do need 
       #     one we can modify the string to make the label show up in the 
       #     right place.
-      emit(@labels[id] = String.new,:placeholder)
+      emit(@labels[id] = Label.new(with_newline ? " \n#{@indent}  " : ' '))
       #
       # Then we just emit the object itself, prefixed with the (possibly,
       #     but not for certain permanently) null label string we just 
@@ -96,9 +131,9 @@ class ZAML
     end
   end
   
-  def emit(s,placeholder=false)
-    @lines << s.to_s
-    @recent_nl = false unless placeholder
+  def emit(s)
+    @lines << s
+    @recent_nl = false unless s.kind_of?(Label)
   end
   
   def nl(s='')
@@ -203,16 +238,16 @@ class Regexp
 end
 
 class String
-  ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
-  
   def to_zaml(z)
     case
+    when self =~ /\A\s/ || self =~ /\s\Z/
+      z.emit(self.inspect)
+      
     when self =~ /\n/
       z.emit('|-')
       z.nest { each_line("\n") { |line| z.nl; z.emit(line.chomp) } }
       z.nl
-    when self =~ /^\s/ || self =~ /\s$/
-      z.emit(%Q{"#{self =~ /[\\"]/ ? gsub( /\\/, "\\\\\\" ).gsub( /"/, "\\\"" ) : self}"})
+
     when self =~ /[\x00-\x1f]/
       z.emit("!binary |\n")
       z.emit([self].pack("m*"))
@@ -264,7 +299,9 @@ class Hash
             z.nl
             k.to_zaml(z)
             z.emit(': ')
-            v.to_zaml(z)
+            z.unnest(v) { 
+              v.to_zaml(z) 
+            }
           }
         end
       }

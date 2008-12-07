@@ -36,14 +36,11 @@ class ZamlDumpTest < Test::Unit::TestCase
   # some helpers
   #
   
-  # tests a round-trip dump, and exact YAML equality if specified
-  def dump_test(obj, exact_yaml_equality=true)
+  # tests a round-trip dump, and exact YAML equality
+  def dump_test(obj)
     dump = ZAML.dump(obj)
     
-    if exact_yaml_equality
-      assert_equal YAML.dump(obj), dump, "Dump discrepancy"
-    end
-    
+    assert_equal YAML.dump(obj), dump, "Dump discrepancy"
     assert_equal obj, YAML.load(dump), "Reload discrepancy"
   end
   
@@ -110,7 +107,7 @@ class ZamlDumpTest < Test::Unit::TestCase
   def test_dump_string
     dump_test('str')
     dump_test("   leading and trailing whitespace   ")
-    
+
     dump_test("a string \n with newline")
     dump_test("a string with 'quotes'")
     dump_test("a string with \"double quotes\"")
@@ -123,6 +120,7 @@ class ZamlDumpTest < Test::Unit::TestCase
     dump_test("a really long string with \\ escape" * 10)
     
     dump_test("string with binary data \x00 \x01 \x02")
+    dump_test("   funky\n test\n")
   end
   
   # def test_dump_time
@@ -151,16 +149,16 @@ class ZamlDumpTest < Test::Unit::TestCase
   end
   
   def test_dump_simple_nested_hash
-    dump_test({:hash => {:key => 'value'}, :array => [1,2,3]}, false)
+    dump_test({:hash => {:key => 'value'}, :array => [1,2,3]})
   end
   
   def test_dump_nested_hash
-    dump_test(HASH.merge(:hash => {:hash => {:key => 'value'}}, :array => [[1,2,3]]), false)
+    dump_test(HASH.merge(:hash => {:hash => {:key => 'value'}}, :array => [[1,2,3]]))
   end
   
   def test_dump_self_referential_hash
     array = ARRAY + [ARRAY]
-    dump_test(HASH.merge(:hash => HASH, :array => array), false)
+    dump_test(HASH.merge(:hash => HASH, :array => array))
   end
   
   # def test_dump_singlular_self_referential_hash
@@ -186,12 +184,12 @@ class ZamlDumpTest < Test::Unit::TestCase
   end
   
   def test_dump_nested_array
-    dump_test(ARRAY.concat([{:array => [1,2,3]}, [[1,2,3]]]), false)
+    dump_test(ARRAY.concat([{:array => [1,2,3]}, [[1,2,3]]]))
   end
   
   def test_dump_self_referential_array
     array = ARRAY + [ARRAY, HASH.merge(:hash => HASH)]
-    dump_test(array, false)
+    dump_test(array)
   end
   
   # def test_dump_singlular_self_referential_array
@@ -249,20 +247,20 @@ class ZamlDumpTest < Test::Unit::TestCase
     :nested_arrays => NESTED_ARRAYS
   }
   
-  # def test_dump_DATA
-  #   dump_test(DATA, false)
-  # end
-
-  # def test_dump_MORE_DATA
-  #   dump_test(MORE_DATA, false)
-  # end
+  def test_dump_DATA
+    assert_equal YAML.dump(DATA), ZAML.dump(DATA)
+  end
   
-  # def test_dump_NESTED_ARRAYS
-  #   dump_test(NESTED_ARRAYS, false)
-  # end
+  def test_dump_MORE_DATA
+    assert_equal YAML.dump(MORE_DATA), ZAML.dump(MORE_DATA)
+  end
   
-  # def test_dump_COMPLEX_DATA
-  #   dump_test(COMPLEX_DATA, false)
-  # end
+  def test_dump_NESTED_ARRAYS
+    assert_equal YAML.dump(NESTED_ARRAYS), ZAML.dump(NESTED_ARRAYS)
+  end
+  
+  def test_dump_COMPLEX_DATA
+    assert_equal YAML.dump(COMPLEX_DATA), ZAML.dump(COMPLEX_DATA)
+  end
   
 end
