@@ -239,6 +239,9 @@ end
 class String
   def to_zaml(z)
     case
+    when self =~ /^(true|false|-?(0x)?\d+\.?\d*)$/
+      z.emit('"' + self + '"')
+
     when self =~ /\A\s/ || self =~ /\s\Z/
       z.emit(self.inspect)
       
