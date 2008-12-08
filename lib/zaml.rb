@@ -256,18 +256,20 @@ class String
   end
 end
 
-# class Time
-#   def to_zaml(z)
-#     # 2008-12-06 10:06:51.373758 -07:00
-#     z.emit(self.strftime("%Y-%m-%d %H:%M:%s "))
-#   end
-# end
-# 
-# class Date
-#   def to_zaml(z)
-#     z.emit(sprintf("!timestamp %s", self.to_s))
-#   end
-# end
+class Time
+  def to_zaml(z)
+    # 2008-12-06 10:06:51.373758 -07:00
+    ms = ("%0.6f" % (usec * 1e-6)).sub(/^\d+\./,'')
+    offset = "%+0.2i:%0.2i" % [utc_offset / 3600, (utc_offset / 60) % 60]
+    z.emit(self.strftime("%Y-%m-%d %H:%M:%S.#{ms} #{offset}"))
+  end
+end
+ 
+class Date
+  def to_zaml(z)
+    z.emit(strftime('%Y-%m-%d'))
+  end
+end
 
 class Range
   def to_zaml(z)
