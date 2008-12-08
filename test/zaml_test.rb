@@ -125,13 +125,13 @@ class ZamlDumpTest < Test::Unit::TestCase
     dump_test("false")
   end
   
-  # def test_dump_time
-  #   dump_test(Time.now)
-  # end
-  # 
-  # def test_dump_date
-  #   dump_test(Date.strptime('2008-08-08'))
-  # end
+  def test_dump_time
+    dump_test(Time.now)
+  end
+   
+  def test_dump_date
+    dump_test(Date.strptime('2008-08-08'))
+  end
   
   def test_dump_range
     dump_test(1..10)
