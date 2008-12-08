@@ -123,6 +123,12 @@ class ZamlDumpTest < Test::Unit::TestCase
   def test_dump_strings_that_resemble_literals
     dump_test("true")
     dump_test("false")
+    dump_test("nil")
+    dump_test("3")
+    dump_test("3.14")
+    dump_test("1e-6")
+    dump_test("0x345")
+    dump_test("-0x345")
   end
   
   def test_dump_time
