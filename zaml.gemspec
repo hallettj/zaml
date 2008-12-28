@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name         = "zaml"
   s.version      = "0.1.0"  # Please make sure this matches ZAML::VERSION
-  s.date         = "2008-12-06"
+  s.date         = "2008-12-28"
   s.summary      = "A partial replacement for YAML, writen with speed and code clarity in mind."
   s.authors      = ["Markus Roberts", "Jesse Hallett", "Ian McIntosh", "Igal Koshevoy", "Simon Chiang"]
   s.email        = "zaml@googlegroups.com"
