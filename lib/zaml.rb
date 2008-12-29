@@ -213,6 +213,16 @@ class Exception
 
 class String
     ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
+    
+    num = '[-+]?(0x)?\d+\.?\d*'
+    ESCAPE_CASES = [
+      /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i,
+      /\A(\n* |[-:?!#&*'"]|<<|%.+:.)/,
+      /\s$/,
+      /^[>|][-+\d]*\s/i,
+      /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]|[,\[\]\{\}\r\t]|:\s|\s#/
+    ]
+    
     def escaped_for_zaml
         gsub( /\\/, "\\\\\\" ).
         gsub( /"/, "\\\"" ).
@@ -220,24 +230,14 @@ class String
         gsub( /([\x80-\xFF])/ ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
         end
     def to_zaml(z)
-        z.first_time_only(self) { 
-            num = '[-+]?(0x)?\d+\.?\d*'
+        z.first_time_only(self) {
             case
               when self == ''
                 z.emit('""')
               # when self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/
               #   z.emit("!binary |\n")
               #   z.emit([self].pack("m*"))
-              when (
-                    (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or 
-                    (self =~ /\A\n* /) or
-                    (self =~ /\s$/) or
-                    (self =~ /^[>|][-+\d]*\s/i) or
-                    (self[-1..-1] =~ /\s/) or 
-                    (self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/) or
-                    (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or 
-                    (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/) or
-                    false)
+              when *ESCAPE_CASES
                 z.emit("\"#{escaped_for_zaml}\"")
               when self =~ /\n/
                 if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
