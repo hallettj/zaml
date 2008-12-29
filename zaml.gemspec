@@ -1,7 +1,8 @@
+require 'lib/zaml'
 Gem::Specification.new do |s|
   s.name         = "zaml"
-  s.version      = "0.1.0"  # Please make sure this matches ZAML::VERSION
-  s.date         = "2008-12-28"
+  s.version      = ZAML::VERSION
+  s.date         = Time.now.strftime("%Y-%m-%d")
   s.summary      = "A partial replacement for YAML, writen with speed and code clarity in mind."
   s.authors      = ["Markus Roberts", "Jesse Hallett", "Ian McIntosh", "Igal Koshevoy", "Simon Chiang"]
   s.email        = "zaml@googlegroups.com"
@@ -13,20 +14,18 @@ Gem::Specification.new do |s|
   s.has_rdoc     = true
   s.rdoc_options = ["--main", "README"]
   
+  # list extra rdoc files here.
+  s.extra_rdoc_files = %W{
+    README
+    LICENSE
+  }
+  
   # list the files you want to include here. you can
   # check this manifest using 'rake :print_manifest'
   s.files = %W{
     README
     LICENSE
     lib/zaml.rb
-    test/zaml_benchmarks.rb
-    test/zaml_test.rb
-  }
-  
-  # list extra rdoc files here.
-  s.extra_rdoc_files = %W{
-    README
-    LICENSE
   }
 
   s.test_files = %W{

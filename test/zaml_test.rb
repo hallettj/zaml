@@ -1,8 +1,6 @@
 require 'test/unit'
 require 'yaml'
 require 'zaml'
-require 'rubygems/specification'
-
 
 class My_class
     def initialize
@@ -14,7 +12,6 @@ class My_class
         ['@string', '@self']
         end
     end
-
 
 class ZamlDumpTest < Test::Unit::TestCase
     #
@@ -419,20 +416,5 @@ class ZamlDumpTest < Test::Unit::TestCase
     def test_string_identity
         a = 'str'
         dump_test([a,a])
-        end
-
-    def test_gem_build
-        data = File.read(File.expand_path(File.join(__FILE__, "..", "..", "zaml.gemspec")))
-        spec = nil
-        if data !~ %r{!ruby/object:Gem::Specification}
-            Thread.new { spec = eval("$SAFE = 3\n#{data}") }.join
-          else
-            spec = YAML.load(data)
-          end
-        begin
-            spec.validate
-          rescue Gem::InvalidSpecificationException
-            assert_equal "Gem will build successfully", false
-          end
         end
     end
