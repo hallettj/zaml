@@ -10,6 +10,15 @@ http://gnomecoder.wordpress.com/2008/09/27/yaml-dump-1600-percent-faster/
 http://groups.google.com/group/rubyonrails-core/browse_thread/thread/3e33e31f57e23911/d2eedb7531a12e47?lnk=gst&q=zaml#d2eedb7531a12e47
 
 
+= Installation
+
+Run the following if you haven't already:
+gem sources -a http://gems.github.com
+
+Install the gem:
+sudo gem install hallettj-zaml
+
+
 = Usage
 
 require 'zaml'
