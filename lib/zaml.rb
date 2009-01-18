@@ -34,7 +34,7 @@ class ZAML
         end
     def nested(tail='  ')
         old_indent = @indent
-        @indent = @indent ? @indent + tail : "\n"
+        @indent = "#{@indent || "\n"}#{tail}"
         yield
         @indent = old_indent
         end
