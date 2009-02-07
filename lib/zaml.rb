@@ -200,7 +200,7 @@ class Exception
     #     change we'll most likely want to remove this.  To mitigate the risks
     #     as much as possible, we test for the bug before appling the patch.
     #
-    if yaml_new(self, :tag, "message" => "blurp").message != "blurp"
+    if respond_to? :yaml_new and yaml_new(self, :tag, "message" => "blurp").message != "blurp"
         def self.yaml_new( klass, tag, val )
             o = YAML.object_maker( klass, {} ).exception(val.delete( 'message'))
             val.each_pair do |k,v|
@@ -214,7 +214,7 @@ class Exception
 class String
     ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
     def escaped_for_zaml
-        gsub( /\\/, "\\\\\\" ).
+        gsub( /\x5C/, "\\\\\\" ).  # Demi-kludge for Maglev/rubinius; the regexp should be /\\/ but parsetree chokes on that.
         gsub( /"/, "\\\"" ).
         gsub( /([\x00-\x1F])/ ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }.
         gsub( /([\x80-\xFF])/ ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
