@@ -5,29 +5,33 @@ implementation of the YAML protocol, while ZAML is an attempt to
 produce (effectively) the same output as YAML would have - but much
 faster and with cleaner code.
 
-ZAML has been benchmarked at up to %1600 faster than YAML:
+ZAML has been benchmarked at up to %1600 faster than YAML:  
 http://gnomecoder.wordpress.com/2008/09/27/yaml-dump-1600-percent-faster/
 http://groups.google.com/group/rubyonrails-core/browse_thread/thread/3e33e31f57e23911/d2eedb7531a12e47?lnk=gst&q=zaml#d2eedb7531a12e47
 
 
-= Installation
+## Installation
 
-Run the following if you haven't already:
-gem sources -a http://gems.github.com
+Add gemcutter to your sources if you haven't done so already:
+
+    sudo gem install gemcutter
+    gem tumble
 
 Install the gem:
-sudo gem install hallettj-zaml
+
+    sudo gem install zaml
 
 
-= Usage
+## Usage
 
-require 'zaml'
-File.open('output.yml', 'w') { |f| ZAML.dump(foo,f) }
+    require 'zaml'
+    foo = { :some => { :complicated => [:data, :structure] } }
+    File.open('output.yml', 'w') { |f| ZAML.dump(foo,f) }
 
 
-= License
+## License
 
-Copyright (c) 2008 ZAML contributers
+Copyright (c) 2008-2009 ZAML contributers
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
