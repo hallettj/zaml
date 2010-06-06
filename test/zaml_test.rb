@@ -318,7 +318,12 @@ class ZamlDumpTest < Test::Unit::TestCase
         hash[hash] = hash
         dump_test(hash)
         end
-      
+
+    def test_dump_hash_value_with_colon
+        hash = { 'a' => 'a value:', 'b' => 'b value' }
+        dump_test(hash)
+        end
+
     #
     # array
     #

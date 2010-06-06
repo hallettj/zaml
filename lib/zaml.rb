@@ -231,7 +231,7 @@ class String
               when (
                     (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or 
                     (self =~ /\A\n* /) or
-                    (self =~ /\s$/) or
+                    (self =~ /[\s:]/) or
                     (self =~ /^[>|][-+\d]*\s/i) or
                     (self[-1..-1] =~ /\s/) or 
                     (self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/) or
