@@ -13,7 +13,7 @@
 require 'yaml'
 
 class ZAML
-    VERSION = "0.1.2"
+    VERSION = "0.1.3"
     #
     # Class Methods
     #
